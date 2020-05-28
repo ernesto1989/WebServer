@@ -1,6 +1,8 @@
 package com.conciencia.vertx;
 
+import com.conciencia.vertx.verticles.repository.DataRepository;
 import com.conciencia.vertx.verticles.web.WebServerVerticle;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -30,7 +32,7 @@ public class VertxWebConfig {
     /* Objeto de configuración para bd*/
     private JsonObject config;
     
-    public VertxWebConfig(boolean requireRest, boolean configDatabase) {
+    public VertxWebConfig(boolean requireStaticContent,boolean requireRest, boolean configDatabase) {
         this.vertx = Vertx.vertx();
         
         if(configDatabase){
@@ -43,7 +45,18 @@ public class VertxWebConfig {
             });
         }
         
-        vertx.deployVerticle(new WebServerVerticle(requireRest),hndlr->{
+        vertx.deployVerticle(new WebServerVerticle(requireStaticContent,requireRest),hndlr->{
+            if(hndlr.succeeded()){
+                System.out.println("Web Server deployed");
+            }else{
+                System.out.println("Web Server error!");
+            }
+        });
+    }
+    
+    public void deployRepositoy(DataRepository repo){
+        AbstractVerticle v = (AbstractVerticle) repo;
+        vertx.deployVerticle(v,hndlr->{
             if(hndlr.succeeded()){
                 System.out.println("Web Server deployed");
             }else{
@@ -59,7 +72,7 @@ public class VertxWebConfig {
         Promise<Void> promise = Promise.promise();
         
         host = "localhost:3306";
-        db = "WebServer";
+        db = "MyWebSite";
         user = "root";
         password = "4747819";
         driverClass = "com.mysql.cj.jdbc.Driver";//System.getenv("driverClass");

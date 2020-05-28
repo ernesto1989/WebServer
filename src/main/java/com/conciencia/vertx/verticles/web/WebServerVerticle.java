@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 
 /**
  * Verticle que crea un servidor web
@@ -22,18 +23,29 @@ import io.vertx.ext.web.handler.BodyHandler;
  */
 public class WebServerVerticle extends AbstractVerticle {
 
+    
+    private static final String STATIC_CONTEXT = "/*";
+    
     private static final String REST_API_CONTEXT = "/api/";
     
     private Boolean requireRestApi = true;
     
-    public WebServerVerticle(Boolean requireRestApi){
+    private Boolean requireStaticContent = true;
+    
+    public WebServerVerticle(Boolean requireStaticContent,Boolean requireRestApi){
+        this.requireStaticContent = requireStaticContent;
         this.requireRestApi = requireRestApi;
+    }
+    
+    private void initStaticContent(Router router){
+        router.route(STATIC_CONTEXT).handler(StaticHandler.create().setDefaultContentEncoding("UTF-8"));
     }
     
     // <editor-fold defaultstate="collapsed" desc="DEFINICION DE MÉTODOS HTTP REST GENERICOS">
     
     private void initRestApi(Router router){
         router.route().handler(BodyHandler.create()); // permite recibir json en el servidor
+        router.route(REST_API_CONTEXT + "*");
         
         //REST Api
         defineGetAll(router);
@@ -152,12 +164,16 @@ public class WebServerVerticle extends AbstractVerticle {
     public void start(Promise<Void> promise) throws Exception {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
+        
+        if(requireStaticContent)
+            initStaticContent(router);
+        
         if(requireRestApi)
             initRestApi(router);
         
         server.requestHandler(router).listen(
             //Integer.getInteger("http.port"), System.getProperty("http.address", "0.0.0.0"), hndlr -> {
-            8081, hndlr -> {
+            8080, hndlr -> {
                 if (hndlr.succeeded()) {
                     System.out.println("Server up n running");
                     promise.complete();
