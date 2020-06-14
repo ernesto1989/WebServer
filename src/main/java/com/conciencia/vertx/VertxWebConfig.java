@@ -31,19 +31,24 @@ public class VertxWebConfig {
 
     /* Objeto de configuración para bd*/
     private JsonObject config;
+
     
-    public VertxWebConfig(boolean requireStaticContent,boolean requireRest, boolean configDatabase) {
+    public VertxWebConfig(boolean requireStaticContent,boolean requireRest, 
+            String host, String db, String user, String password, String driverClass) {
+        this.host = host;
+        this.db = db;
+        this.user = user;
+        this.password = password;
+        this.driverClass = driverClass;
         this.vertx = Vertx.vertx();
         
-        if(configDatabase){
-            initDBClient().setHandler(hndlr->{
-                if(hndlr.succeeded()){
-                    System.out.println("initDB complete");
-                }else{
-                    System.out.println("initDB error!");
-                }
-            });
-        }
+        initDBClient().setHandler(hndlr->{
+            if(hndlr.succeeded()){
+                System.out.println("initDB complete");
+            }else{
+                System.out.println("initDB error!");
+            }
+        });
         
         vertx.deployVerticle(new WebServerVerticle(requireStaticContent,requireRest),hndlr->{
             if(hndlr.succeeded()){
@@ -70,12 +75,6 @@ public class VertxWebConfig {
      */
     private Future<Void> initDBClient(){
         Promise<Void> promise = Promise.promise();
-        
-        host = "localhost:3306";
-        db = "MyWebSite";
-        user = "root";
-        password = "4747819";
-        driverClass = "com.mysql.cj.jdbc.Driver";//System.getenv("driverClass");
         
         config = new JsonObject()
             .put("url", "jdbc:mysql://" + host+"/" + db + "?useSSL=false&useTimezone=true&serverTimezone=America/Mexico_City&user=" + user + "&password=" + password)
